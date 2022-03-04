@@ -53,8 +53,8 @@ app.post('/api/users/:name', verifyJWTSecureRoute, (req, res) => {
 
 
 app.get('/api/users/:name/reminders', verifyJWTSecureRoute, async (req, res) => {
-  const { appointments } = await getUserInfo({ name: req.params.name })
-  res.json({ appointments, token: req.refreshToken  })
+  const { name, appointments } = await getUserInfo({ name: req.params.name })
+  res.json({ name, appointments, token: req.refreshToken  })
 })
 
 
@@ -81,7 +81,7 @@ app.post("/api/login", async (req, res) => {
   const userInfo = await getUserInfo(body)
 
   console.log(body, userInfo)
-  
+
   if(userInfo.error){
     res.status(401).json(userInfo)
   } else{
@@ -89,9 +89,9 @@ app.post("/api/login", async (req, res) => {
     const validPassword = await bcrypt.compare(body.password, userInfo.hash)
     
     if(validPassword){
-      const { name } = userInfo
+      const { name, appointments } = userInfo
       const token = jwt.sign({ name }, JWT_SECRET, { expiresIn: EXPIRATION_TIME })
-      res.json({ token })
+      res.json({ token, name, appointments })
     } else{
       res.json({ error: "Invalid password" })
     }
