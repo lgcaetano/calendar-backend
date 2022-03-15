@@ -3,7 +3,7 @@ const bodyParser = require("body-parser")
 const express = require("express")
 const cors = require("cors")
 const bcrypt = require("bcrypt")
-const { saveReminder, createUser, getUserInfo } = require("./db.js")
+const { saveReminder, createUser, getUserInfo, deleteReminder } = require("./db.js")
 const jwt = require("jsonwebtoken")
 
 const JWT_SECRET = process.env.JWT_SECRET
@@ -45,10 +45,20 @@ function verifyJWTSecureRoute(req, res, next) {
 
 app.post('/api/users/:name', verifyJWTSecureRoute, (req, res) => {
   saveReminder({
-    name: req.body.name,
+    name: req.params.name,
     date: req.body.date,
     label: req.body.label
-  }, data => res.json({ ...data, token: req.refreshToken }))
+  }, data => res.json({ ...data._doc, token: req.refreshToken }))
+})
+
+
+app.delete('/api/users/:name/:id', verifyJWTSecureRoute, (req, res) => {
+
+
+  deleteReminder({
+    name: req.params.name,
+    id: req.params.id
+  }, data => res.json({ ...data._doc, token: req.refreshToken }))
 })
 
 
@@ -71,7 +81,8 @@ app.use('/api/newUser', async (req, res) => {
   createUser(user, (err, data) => {
     if(err)
       res.json({ error: "Username already in use"})
-    res.json(data)
+    const token = jwt.sign({ name }, JWT_SECRET, { expiresIn: EXPIRATION_TIME })
+    res.json({ ...data._doc, token }) 
   })
 })
 
@@ -80,7 +91,7 @@ app.post("/api/login", async (req, res) => {
   const body = req.body
   const userInfo = await getUserInfo(body)
 
-  console.log(body, userInfo)
+  // console.log(body, userInfo)
 
   if(userInfo.error){
     res.status(401).json(userInfo)

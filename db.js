@@ -1,5 +1,6 @@
 require("dotenv").config()
 
+const { ObjectId } = require("mongodb");
 const mongoose = require("mongoose");
 
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -24,6 +25,23 @@ function saveReminder(saveData, callback){
     
 }
 
+function deleteReminder(deletionData, callback){
+
+    let username = deletionData.name
+
+    console.log(deletionData)
+
+    User.findOneAndUpdate({ name: username },{ 
+        $pull: { 
+            appointments: { _id: deletionData.id }
+        }
+    }, {new: true}, (err, data) => {
+            console.log(data.appointments)
+            callback(data)
+        })
+    
+}
+
 function createUser(user, callback){
     const newUser = new User({ 
         ...user,
@@ -42,4 +60,5 @@ async function getUserInfo(requestInfo){
 exports.saveReminder = saveReminder
 exports.createUser = createUser
 exports.getUserInfo = getUserInfo
+exports.deleteReminder = deleteReminder
  
